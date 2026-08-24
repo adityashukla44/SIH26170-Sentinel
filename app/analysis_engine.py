@@ -54,10 +54,18 @@ def determine_risk(
 
     reasons = []
 
-    if anomaly_score >= 70 or deviation_percent >= 200:
+    if (
+        deviation_percent >= 100
+        or (anomaly_score >= 90 and deviation_percent >= 50)
+        or drift_rate > 0.50
+    ):
         risk_level = "HIGH"
         decision = "FAIL"
-    elif anomaly_score >= 30 or deviation_percent >= 50:
+    elif (
+        deviation_percent >= 50
+        or anomaly_score >= 70
+        or drift_rate > 0.20
+    ):
         risk_level = "MEDIUM"
         decision = "REVIEW"
     else:
