@@ -1,0 +1,34 @@
+SIH26170 BACKEND ARCHITECTURE
+
+CSV Upload
+↓
+Dataset Validation
+↓
+Batch Statistics
+↓
+Component Selection
+↓
+Dynamic Anomaly Detection
+↓
+Time-Series Drift Analysis
+↓
+168h Prediction
+↓
+Risk Scoring
+↓
+Explainable Reasons
+↓
+PASS / REVIEW / FAIL
+↓
+JSON API
+↓
+Frontend Dashboard
+
+MAIN ENDPOINT: POST /batch/analyze-component
+
+MODULES:
+main.py → FastAPI endpoints
+schemas.py → Request/response validation
+batch_analysis.py → Dataset and batch analysis
+analysis_engine.py → Anomaly and drift calculations
+prediction_engine.py → 168h prediction
