@@ -2,6 +2,7 @@ from io import BytesIO
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.schemas import (
     ComponentData,
@@ -9,14 +10,14 @@ from app.schemas import (
     BatchComponentAnalysisResponse,
 )
 
-from app.prediction_engine import predict_168h as predict_168h_model
-
 from app.analysis_engine import (
     calculate_anomaly_score,
     calculate_deviation_percent,
     calculate_drift,
     determine_risk,
 )
+
+from app.prediction_engine import predict_168h as predict_168h_model
 
 from app.batch_analysis import (
     validate_dataset,
@@ -32,6 +33,16 @@ app = FastAPI(
 )
 
 
+# CORS for local frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.get("/health")
 def health_check():
     return {
@@ -42,7 +53,6 @@ def health_check():
 
 @app.post("/analyze", response_model=AnalysisResponse)
 def analyze_component(component: ComponentData):
-
     try:
         anomaly_score = calculate_anomaly_score(
             component.current_0h,
@@ -60,6 +70,8 @@ def analyze_component(component: ComponentData):
             component.current_24h,
         )
 
+        # Temporary reference for direct single-component analysis.
+        # Batch endpoint uses the real uploaded dataset.
         batch_average = 10.0
 
         latest_value = (
@@ -101,9 +113,7 @@ def analyze_component(component: ComponentData):
 
 
 @app.post("/batch/analyze")
-async def analyze_batch(
-    file: UploadFile = File(...)
-):
+async def analyze_batch(file: UploadFile = File(...)):
     try:
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(
