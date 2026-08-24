@@ -51,40 +51,28 @@ def determine_risk(
     current_24h: float,
     deviation_percent: float,
 ) -> tuple[str, str, list[str]]:
-
     reasons = []
 
-    if (
-        deviation_percent >= 100
-        or (anomaly_score >= 90 and deviation_percent >= 50)
-        or drift_rate > 0.50
-    ):
+    if deviation_percent >= 100 or drift_rate > 0.50:
         risk_level = "HIGH"
         decision = "FAIL"
-    elif (
-        deviation_percent >= 50
-        or anomaly_score >= 70
-        or drift_rate > 0.20
-    ):
+    elif deviation_percent >= 50 or drift_rate > 0.20:
         risk_level = "MEDIUM"
         decision = "REVIEW"
     else:
         risk_level = "LOW"
         decision = "PASS"
 
-    if drift_rate > 0.20:
-        reasons.append("Strong positive current drift detected")
-
     if deviation_percent >= 50:
-        reasons.append("Component is significantly above the batch average")
+        reasons.append("168h current is significantly different from the batch average")
 
-    if predicted_168h > current_24h * 2:
-        reasons.append("Predicted 168h value shows significant growth")
+    if drift_rate > 0.20:
+        reasons.append("Strong positive current drift detected over burn-in")
 
-    if anomaly_score >= 70:
-        reasons.append("Highly abnormal behavior detected")
+    if anomaly_score >= 70 and deviation_percent >= 50:
+        reasons.append("Component shows statistically unusual behavior")
 
-    if not reasons:
-        reasons.append("Component behavior is within expected variation")
+    if predicted_168h > current_24h * 2 and drift_rate > 0:
+        reasons.append("Predicted 168h value indicates continued upward drift")
 
     return risk_level, decision, reasons
