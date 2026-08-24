@@ -15,7 +15,6 @@ from app.analysis_engine import (
     calculate_anomaly_score,
     calculate_deviation_percent,
     calculate_drift,
-    predict_168h,
     determine_risk,
 )
 
