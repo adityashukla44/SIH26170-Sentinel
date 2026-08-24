@@ -8,15 +8,6 @@ def calculate_drift(current_0h: float, current_24h: float) -> float:
     return (current_24h - current_0h) / current_0h
 
 
-def predict_168h(current_0h: float, current_24h: float) -> float:
-    """
-    Temporary mathematical predictor.
-    Later we will plug in Kunal's trained ML model.
-    """
-    hourly_change = (current_24h - current_0h) / 24
-    return current_0h + (hourly_change * 168)
-
-
 def calculate_anomaly_score(
     current_0h: float,
     current_24h: float,
