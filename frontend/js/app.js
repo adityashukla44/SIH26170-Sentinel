@@ -2,7 +2,8 @@ import { api, API_BASE } from './api.js';
 import { inspect } from './csv.js';
 import * as f from './format.js';
 import * as charts from './charts.js';
-import { drawBackdrop, mountMonitor } from './home.js';
+import { mountMonitor } from './home.js';
+import { createBackdrop } from './backdrop3d.js';
 
 const { esc } = f;
 const { badge, statusKey, DECISIONS } = charts;
@@ -80,11 +81,15 @@ const state = {
    Boot
    ================================================================= */
 
+let backdrop = null;
+
 function boot() {
+  backdrop = createBackdrop($('#backdrop3d'));
   restoreSession();
   bindGlobal();
   bindIntake();
   updateThemeButton();
+  updateMotionButton();
   updateCsvPill();
   $('#apiBaseLabel').textContent = API_BASE || location.origin;
   if (API_BASE) $('#sampleLink').href = `${API_BASE}/sample/burn_in_dataset.csv`;
@@ -158,6 +163,29 @@ function updateThemeButton() {
   $('#themeBtn').setAttribute('aria-label', `Switch to ${next} theme`);
 }
 
+/* ---------- background motion ---------- */
+
+function toggleMotion() {
+  if (!backdrop.supported) return;
+  const on = backdrop.setMotion(!backdrop.moving());
+  updateMotionButton();
+  toast(on ? 'Background motion on' : 'Background motion paused');
+}
+
+function updateMotionButton() {
+  const btn = $('#motionBtn');
+  const item = $('#moreMotion');
+  if (!backdrop.supported) { btn.hidden = true; item.hidden = true; return; }
+  const on = backdrop.moving();
+  btn.setAttribute('aria-pressed', String(on));
+  const label = on ? 'Pause background motion' : 'Play background motion';
+  btn.setAttribute('aria-label', label);
+  btn.title = `${label} (M)`;
+  item.setAttribute('aria-pressed', String(on));
+  item.querySelector('use').setAttribute('href', on ? '#i-pause' : '#i-play');
+  item.querySelector('small').textContent = on ? 'Pause the 3D field' : 'Play the 3D field';
+}
+
 /* ---------- health ---------- */
 
 async function checkHealth() {
@@ -215,6 +243,7 @@ function route() {
   });
   setMoreMenu(false);
   document.title = `${TITLES[view]} · Sentinel · SIH26170`;
+  backdrop.setView(view);
 
   if (changed || state.dirty[view]) renderView(view);
   if (changed) window.scrollTo({ top: 0 });
@@ -240,7 +269,6 @@ function renderView(view) {
 let monitorMounted = false;
 
 function renderHome() {
-  drawBackdrop($('#heroTraces'));
   if (!monitorMounted) {
     mountMonitor($('#homeMonitor'), { formula: state.health?.model?.training?.formula });
     monitorMounted = true;
@@ -457,11 +485,14 @@ async function runScreening() {
   if (button) button.disabled = true;
   $('#intakeError') && ($('#intakeError').innerHTML = '');
   startPipeline();
+  backdrop.setBusy(true);
 
   try {
     const file = new File([p.text], p.name, { type: 'text/csv' });
     const [result] = await Promise.all([api.screen(file), sleep(950)]);
     finishPipeline();
+    backdrop.setBusy(false);
+    backdrop.pulse();
     setBatch(result, { name: p.name, text: p.text });
     toast(`Screened ${f.plural(result.summary.component_count, 'component')} in ${f.ms(result.elapsed_ms)}`, 'success');
     await sleep(320);
@@ -478,6 +509,7 @@ async function runScreening() {
     if (button) { button.disabled = false; button.classList.remove('is-loading'); }
   } finally {
     state.screening = false;
+    backdrop.setBusy(false);
   }
 }
 
@@ -1414,6 +1446,7 @@ function toast(message, kind = 'info') {
 function bindGlobal() {
   $('#themeBtn').addEventListener('click', toggleTheme);
   $('#helpBtn').addEventListener('click', () => $('#shortcutsDialog').showModal());
+  $('#motionBtn').addEventListener('click', toggleMotion);
   $('#drawerBackdrop').addEventListener('click', () => closeDrawer());
   $$('[data-close-dialog]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
   matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeButton);
@@ -1469,6 +1502,7 @@ function bindGlobal() {
       case 'new-batch': go('upload'); break;
       case 'sample': go('upload'); runSample(); break;
       case 'more': setMoreMenu($('#moreMenu').hidden); break;
+      case 'toggle-motion': toggleMotion(); setMoreMenu(false); break;
       case 'run-screening': runScreening(); break;
       case 'clear-file': state.pending = null; renderPreview(); resetPipeline(); $('#fileInput').click(); break;
       case 'filter': {
@@ -1536,6 +1570,7 @@ function bindGlobal() {
         }
         break;
       case 't': case 'T': toggleTheme(); break;
+      case 'm': case 'M': toggleMotion(); break;
       case 'n': case 'N': go('upload'); break;
       case '?': $('#shortcutsDialog').showModal(); break;
       default: break;

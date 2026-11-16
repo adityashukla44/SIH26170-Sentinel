@@ -63,8 +63,12 @@
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"/></symbol>
   <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
 </svg>
+
+<!-- Live 3D backdrop (js/backdrop3d.js): burn-in traces rolling toward you. Decorative. -->
+<canvas class="backdrop-3d" id="backdrop3d" aria-hidden="true"></canvas>
 
 <a class="skip-link" href="#main">Skip to content</a>
 
@@ -95,6 +99,9 @@
       <button class="icon-btn icon-btn-box" id="themeBtn" type="button" aria-label="Switch theme" title="Switch theme (T)">
         <svg class="icon theme-sun"><use href="#i-sun"/></svg><svg class="icon theme-moon"><use href="#i-moon"/></svg>
       </button>
+      <button class="icon-btn icon-btn-box hide-sm" id="motionBtn" type="button" aria-pressed="true" aria-label="Pause background motion" title="Pause background motion (M)">
+        <svg class="icon motion-pause"><use href="#i-pause"/></svg><svg class="icon motion-play"><use href="#i-play"/></svg>
+      </button>
       <button class="icon-btn icon-btn-box hide-sm" id="helpBtn" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
         <svg class="icon"><use href="#i-keyboard"/></svg>
       </button>
@@ -107,7 +114,6 @@
   <!-- ============ Home ============ -->
   <section class="view" data-view="home" aria-labelledby="homeTitle">
     <div class="home-hero">
-      <svg class="hero-traces" id="heroTraces" aria-hidden="true" focusable="false"></svg>
       <div class="wrap hero-inner">
         <p class="mono-eyebrow">SIH 26170 · Burn-in screening · Spacecraft electronics</p>
         <h1 class="mega" id="homeTitle">
@@ -456,6 +462,7 @@ uvicorn app.main:app --reload</code></pre>
 <div class="more-menu" id="moreMenu" hidden>
   <a href="#/simulator" data-nav="simulator"><svg class="icon"><use href="#i-sliders"/></svg><span>Simulator</span><small>Test a what-if component</small></a>
   <a href="#/method" data-nav="method"><svg class="icon"><use href="#i-book"/></svg><span>Method</span><small>How a verdict is reached</small></a>
+  <button type="button" id="moreMotion" data-action="toggle-motion" aria-pressed="true"><svg class="icon"><use href="#i-pause"/></svg><span>Background motion</span><small>Pause the 3D field</small></button>
 </div>
 
 <!-- Component detail -->
@@ -477,6 +484,7 @@ uvicorn app.main:app --reload</code></pre>
     <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Previous or next component in the detail panel</dd></div>
     <div><dt><kbd>Esc</kbd></dt><dd>Close the detail panel</dd></div>
     <div><dt><kbd>T</kbd></dt><dd>Switch light and dark theme</dd></div>
+    <div><dt><kbd>M</kbd></dt><dd>Pause or play the 3D background</dd></div>
     <div><dt><kbd>?</kbd></dt><dd>Show this list</dd></div>
   </dl>
 </dialog>

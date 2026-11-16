@@ -1,5 +1,5 @@
-// Home page art: the faint burn-in traces behind the hero and the burn-in monitor.
-// Both are illustrations drawn from a seeded generator, so every visit shows the same run.
+// Home page art: the burn-in monitor. The 3D field behind every page lives in backdrop3d.js.
+// The monitor is an illustration drawn from a seeded generator, so every visit shows the same run.
 // The monitor's dashed forecasts use the live model formula from /health when it is known.
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -54,44 +54,6 @@ function el(name, attrs = {}, parent = null) {
 }
 
 const pathOf = (points, x, y) => points.map(([t, v], i) => `${i ? 'L' : 'M'}${x(t).toFixed(1)} ${y(v).toFixed(1)}`).join('');
-
-/* ---------- hero backdrop ---------- */
-
-export function drawBackdrop(svg) {
-  if (!svg || svg.dataset.drawn) return;
-  svg.dataset.drawn = '1';
-  const W = 1600;
-  const H = 820;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-
-  const x = (t) => 40 + (t / HOURS) * (W - 80);
-  const y = (v) => H - 90 - (v / 70) * (H - 160);
-
-  const grid = el('g', { class: 'bd-grid' }, svg);
-  for (let gx = 40; gx <= W; gx += 80) el('line', { x1: gx, y1: 0, x2: gx, y2: H }, grid);
-  for (let gy = 30; gy <= H; gy += 80) el('line', { x1: 0, y1: gy, x2: W, y2: gy }, grid);
-
-  const run = burnInRun({ seed: 23, spread: 2.6, counts: { healthy: 70, edge: 4, latent: 3, obvious: 2 } });
-  const traces = el('g', { class: 'bd-traces' }, svg);
-  run.forEach((tr, i) => {
-    const cls = tr.kind === 'healthy' ? 'bd-trace' : 'bd-trace bd-hot';
-    el('path', { d: pathOf(tr.points, x, y), class: cls, style: `--o:${(0.35 + (i % 7) * 0.07).toFixed(2)}` }, traces);
-  });
-
-  const marks = el('g', { class: 'bd-marks' }, svg);
-  run.filter((tr) => tr.kind !== 'healthy').forEach((tr, i) => {
-    const cx = x(HOURS);
-    const cy = y(tr.at(HOURS));
-    el('circle', { cx, cy, r: 14, class: 'bd-halo', style: `animation-delay:${-i * 0.7}s` }, marks);
-    el('circle', { cx, cy, r: 4, class: 'bd-dot' }, marks);
-  });
-  // A scatter of faint readings, like stars on a scope.
-  const rand = mulberry32(99);
-  for (let i = 0; i < 46; i += 1) {
-    el('circle', { cx: (rand() * W).toFixed(0), cy: (rand() * H).toFixed(0), r: (0.8 + rand() * 1.6).toFixed(1), class: 'bd-star' }, marks);
-  }
-}
 
 /* ---------- burn-in monitor ---------- */
 

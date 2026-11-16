@@ -17,7 +17,7 @@ Click **Screen the sample batch** for a one-click demo on `data/burn_in_dataset.
 
 | View | What it shows |
 |---|---|
-| **Home** (`#/`) | The burn-in screening landing page: the "PROOF for every component" hero with the glossy ring, faint burn-in traces behind it and the columns a CSV needs. Below it, an animated burn-in monitor plays one illustrated run from 0 h to 168 h (healthy band, an edge part, a latent defect, an obvious failure), with the drift model's dashed 168 h forecasts and the verdict each part gets. Then the three steps, the three verdicts, live forecast-model facts from `/health` and a closing call to action. |
+| **Home** (`#/`) | The burn-in screening landing page: the "PROOF for every component" hero with the glossy ring and the columns a CSV needs. Below it, an animated burn-in monitor plays one illustrated run from 0 h to 168 h (healthy band, an edge part, a latent defect, an obvious failure), with the drift model's dashed 168 h forecasts and the verdict each part gets. Then the three steps, the three verdicts, live forecast-model facts from `/health` and a closing call to action. |
 | **Burn-in CSV** (`#/upload`) | Its own page for uploading. Drag-and-drop CSV intake; columns, numbers and duplicate IDs are checked in the browser before upload, and the pipeline animates while the batch is screened. When a batch is already loaded, a card shows it with a link back to its overview. |
 | **Overview** | Batch yield, PASS / REVIEW / FAIL counts, the risk map (anomaly score against drift, deviation or forecast growth), highest-risk components, batch current over burn-in, batch statistics, the ground-truth check against the optional `Label` column and the forecast check. |
 | **Components** | Every component in a sortable, searchable, filterable table with burn-in sparklines and score meters. Export the current view as CSV. |
@@ -25,9 +25,11 @@ Click **Screen the sample batch** for a one-click demo on `data/burn_in_dataset.
 | **Simulator** | What-if scoring against the loaded batch. Move sliders or start from Healthy, Latent defect, Obvious failure or Dynamic outlier, and the verdict updates live. |
 | **Method** | The pipeline, scoring weights, thresholds, forecast rules and API, for judges and reviewers. |
 
-Header: the boxed Sentinel logo goes home; the tabs are Home, Overview, Components, Simulator and Method; the dashed **Burn-in CSV** option opens the upload page and, once a batch is screened, shows that file and its component count. On phones the tabs move to a bottom bar (Home, CSV, Overview, Components, More), and More opens Simulator and Method.
+**Live 3D background:** every page sits on a WebGL field of burn-in traces rolling toward you. Each row is one component's current across the 168 h run: most stay flat, a few drift (cyan) and a few climb late like latent defects (lime). Ridges rise either side of a calm valley, dust drifts above it, a scan line sweeps the burn-in clock across the field, and the camera leans with the pointer and with scrolling. It speeds up while a batch is being screened and sends a ripple through the field when the result arrives. It is brightest on Home and calms down on the data pages and as you scroll, so charts and text stay readable. Pause or play it with the button in the header, `M`, or More on phones; the choice is remembered. With the system's reduced-motion setting it shows a still frame, and without WebGL the plain aurora background is used.
 
-Keyboard: `1`–`5` switch to Home, Overview, Components, Simulator and Method, `N` opens Burn-in CSV for a new batch, `/` searches, `←` `→` step through components, `Esc` closes the panel or the More menu, `T` switches light and dark, `?` lists shortcuts.
+Header: the boxed Sentinel logo goes home; the tabs are Home, Overview, Components, Simulator and Method; the dashed **Burn-in CSV** option opens the upload page and, once a batch is screened, shows that file and its component count. On phones the tabs move to a bottom bar (Home, CSV, Overview, Components, More), and More opens Simulator, Method and the background motion switch.
+
+Keyboard: `1`–`5` switch to Home, Overview, Components, Simulator and Method, `N` opens Burn-in CSV for a new batch, `/` searches, `←` `→` step through components, `Esc` closes the panel or the More menu, `T` switches light and dark, `M` pauses or plays the 3D background, `?` lists shortcuts.
 
 Light and dark themes, phone / tablet / desktop layouts, no frontend libraries, fonts self-hosted, works offline.
 
@@ -110,7 +112,8 @@ app/schemas.py            Request and response models
 frontend/index.html       Dashboard markup and icon sprite
 frontend/css/             Design tokens, layout, components, light and dark themes
 frontend/js/app.js        Views, routing, simulator, export, shortcuts
-frontend/js/home.js       Home page art: hero burn-in traces and the animated burn-in monitor
+frontend/js/home.js       Home page art: the animated burn-in monitor
+frontend/js/backdrop3d.js Live 3D background (plain WebGL): rolling burn-in field, dust, scan line, ripple
 frontend/js/charts.js     Hand-drawn SVG charts (risk map, trajectories, gauge)
 frontend/js/csv.js        In-browser CSV checks that mirror the backend
 frontend/fonts/           Manrope (SIL Open Font License)
