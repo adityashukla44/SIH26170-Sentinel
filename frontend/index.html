@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sentinel · Burn-in Screening · SIH26170</title>
+<meta name="description" content="AI-driven burn-in screening for spacecraft electronic components. Upload a burn-in CSV and get PASS, REVIEW or FAIL for every component, with reasons.">
+<meta name="theme-color" content="#050408">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>
+  // Dark is the house look; light is opt-in. Applied before first paint so the page never flashes.
+  (function () {
+    var t = 'dark';
+    try { if (localStorage.getItem('sentinel.theme') === 'light') t = 'light'; } catch (e) {}
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<!-- Icon sprite: 24px grid, 1.5px strokes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="logoTile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#2E1065"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-pass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.2 12.3 2.6 2.6 5-5.4"/></symbol>
+  <symbol id="i-review" viewBox="0 0 24 24"><path d="M10.3 4.2 2.8 17.5a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4M12 17h.01"/></symbol>
+  <symbol id="i-fail" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="m9.5 9.5 5 5m0-5-5 5"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4"/><path d="M4 17v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M7.5 14h9"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v14H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13v-4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4.5h-4.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.5 9.5v10"/></symbol>
+  <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M17 5H7l5.5 7L7 19h10"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-decision" viewBox="0 0 24 24"><path d="M9 11.5l3 3 8.5-8.5"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="m7 9.5 3 2.5-3 2.5M12.5 15H17"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar" id="topbar">
+  <div class="wrap topbar-inner">
+    <a class="logo" href="#/" aria-label="Sentinel home">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="8" class="logo-tile"/><path d="M7 18.5h4.5l2.2-6.5 3.8 11 2.8-7.5H25" class="logo-pulse"/></svg>
+      <span class="wordmark"><span class="wm-name">Sentinel</span><span class="wm-sub">Burn-in screening</span></span>
+    </a>
+
+    <nav class="tabs" aria-label="Views">
+      <a class="tab" href="#/" data-nav="home"><svg class="icon"><use href="#i-home"/></svg><span>Home</span></a>
+      <a class="tab" href="#/overview" data-nav="overview"><svg class="icon"><use href="#i-grid"/></svg><span>Overview</span></a>
+      <a class="tab" href="#/components" data-nav="components"><svg class="icon"><use href="#i-list"/></svg><span>Components</span></a>
+      <a class="tab" href="#/simulator" data-nav="simulator"><svg class="icon"><use href="#i-sliders"/></svg><span>Simulator</span></a>
+      <a class="tab" href="#/method" data-nav="method"><svg class="icon"><use href="#i-book"/></svg><span>Method</span></a>
+    </nav>
+
+    <div class="topbar-actions">
+      <a class="csv-pill" id="csvPill" href="#/upload" data-nav="upload" title="Upload a burn-in CSV (N)">
+        <svg class="icon"><use href="#i-upload"/></svg>
+        <span class="csv-pill-name" id="csvPillName">Burn-in CSV</span>
+        <span class="csv-pill-count tnum" id="csvPillCount" hidden></span>
+      </a>
+      <span class="api-pill" id="apiPill" data-state="pending" role="status">
+        <span class="api-dot" aria-hidden="true"></span><span class="api-text" id="apiText">Connecting</span>
+      </span>
+      <button class="icon-btn icon-btn-box" id="themeBtn" type="button" aria-label="Switch theme" title="Switch theme (T)">
+        <svg class="icon theme-sun"><use href="#i-sun"/></svg><svg class="icon theme-moon"><use href="#i-moon"/></svg>
+      </button>
+      <button class="icon-btn icon-btn-box hide-sm" id="helpBtn" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+        <svg class="icon"><use href="#i-keyboard"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ============ Home ============ -->
+  <section class="view" data-view="home" aria-labelledby="homeTitle">
+    <div class="home-hero">
+      <svg class="hero-traces" id="heroTraces" aria-hidden="true" focusable="false"></svg>
+      <div class="wrap hero-inner">
+        <p class="mono-eyebrow">SIH 26170 · Burn-in screening · Spacecraft electronics</p>
+        <h1 class="mega" id="homeTitle">
+          <span class="sr-only">Proof for every component.</span>
+          <span class="mega-word" aria-hidden="true">PR<span class="mega-o"><svg viewBox="40 40 400 400" focusable="false">
+            <defs>
+              <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#8B5CF6" stop-opacity=".6"/>
+                <stop offset=".55" stop-color="#6D28D9" stop-opacity=".2"/>
+                <stop offset="1" stop-color="#6D28D9" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="ringBody" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ECFF9C"/>
+                <stop offset=".2" stop-color="#C6F432"/>
+                <stop offset=".45" stop-color="#22D3EE"/>
+                <stop offset=".72" stop-color="#8B5CF6"/>
+                <stop offset="1" stop-color="#2E1065"/>
+              </linearGradient>
+              <linearGradient id="ringShade" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#000" stop-opacity="0"/>
+                <stop offset=".5" stop-color="#000" stop-opacity=".05"/>
+                <stop offset="1" stop-color="#000" stop-opacity=".6"/>
+              </linearGradient>
+              <linearGradient id="ringSpec" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fff" stop-opacity=".95"/>
+                <stop offset=".3" stop-color="#fff" stop-opacity=".35"/>
+                <stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="orbLime" cx="35%" cy="30%" r="70%">
+                <stop offset="0" stop-color="#F7FFD1"/><stop offset=".35" stop-color="#C6F432"/><stop offset="1" stop-color="#4D6B00"/>
+              </radialGradient>
+              <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+              <filter id="ringSoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5"/></filter>
+              <filter id="ringInner" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+            </defs>
+            <circle cx="240" cy="240" r="215" fill="url(#aura)"/>
+            <g class="mega-wire">
+              <path d="M240 44 L428 196 L362 420 L104 404 L52 168 Z M240 44 L240 240 L428 196 M240 240 L362 420 M240 240 L104 404 M240 240 L52 168"/>
+            </g>
+            <g class="ring-float">
+              <g transform="rotate(-22 240 240)">
+                <rect x="108" y="108" width="264" height="264" rx="98" fill="none" stroke="url(#ringBody)" stroke-width="74" opacity=".55" filter="url(#ringGlow)"/>
+                <rect x="108" y="108" width="264" height="264" rx="98" fill="none" stroke="url(#ringBody)" stroke-width="64"/>
+                <rect x="108" y="108" width="264" height="264" rx="98" fill="none" stroke="url(#ringShade)" stroke-width="64"/>
+                <rect x="140" y="140" width="200" height="200" rx="70" fill="none" stroke="#050408" stroke-opacity=".55" stroke-width="10" filter="url(#ringInner)"/>
+                <rect x="96" y="96" width="270" height="270" rx="100" fill="none" stroke="url(#ringSpec)" stroke-width="16" filter="url(#ringSoft)"/>
+                <rect x="140" y="140" width="200" height="200" rx="68" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="1.2"/>
+              </g>
+            </g>
+            <g class="mega-dots">
+              <circle cx="240" cy="44" r="7"/><circle cx="428" cy="196" r="6"/><circle cx="362" cy="420" r="8"/><circle cx="52" cy="168" r="5"/>
+            </g>
+            <g class="orb-a"><circle cx="410" cy="92" r="20" fill="url(#orbLime)"/><circle cx="403" cy="84" r="5" fill="#fff" opacity=".7"/></g>
+          </svg></span>OF</span>
+          <span class="mega-sub" aria-hidden="true">for every component.</span>
+        </h1>
+        <p class="hero-lede">Upload a burn-in CSV. Every component is scored against its own batch, its 168-hour current is forecast from the first 24 hours, and it leaves with <b>PASS</b>, <b>REVIEW</b> or <b>FAIL</b> plus the reasons why.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-xl" href="#/upload"><svg class="icon"><use href="#i-upload"/></svg>Upload burn-in CSV</a>
+          <button class="btn btn-outline btn-xl" type="button" data-action="sample">Screen the sample batch<svg class="icon"><use href="#i-arrow-right"/></svg></button>
+        </div>
+        <div class="hero-needs">
+          <p class="mono-label">What the CSV needs</p>
+          <ul class="col-chips" aria-label="Columns the CSV needs">
+            <li><code>Component_ID</code></li><li><code>Temperature</code></li><li><code>Voltage</code></li><li><code>Current_0h</code></li><li><code>Current_24h</code></li><li><code>Current_96h</code></li><li><code>Current_168h</code></li><li class="is-opt"><code>Label</code> optional</li>
+          </ul>
+        </div>
+      </div>
+      <button class="scroll-cue" type="button" data-action="scroll-to" data-target="homeRun">Scroll to run a burn-in<svg class="icon"><use href="#i-chevron-down"/></svg></button>
+    </div>
+
+    <section class="wrap home-section" id="homeRun" aria-labelledby="runTitle">
+      <div class="section-head">
+        <p class="mono-eyebrow">The burn-in screen</p>
+        <h2 class="h2" id="runTitle">One run. <span class="accent-text">Three verdicts.</span></h2>
+        <p class="lede">Healthy parts stay with their batch. A latent defect looks normal at 24 hours and then climbs, so its forecast stays low and the measured 168-hour current is what catches it. An obvious failure drifts from the start, and the forecast sees it coming.</p>
+      </div>
+      <figure class="monitor" id="homeMonitor">
+        <div class="monitor-bar">
+          <span class="monitor-status"><span class="rec-dot" aria-hidden="true"></span><span data-monitor-status>Ready</span></span>
+          <ul class="monitor-legend" aria-label="Legend">
+            <li class="is-healthy">Batch</li><li class="is-edge">Edge part</li><li class="is-defect">Defect</li><li class="is-forecast">Forecast at 24 h</li>
+          </ul>
+          <span class="monitor-clock tnum" data-monitor-clock>0 h</span>
+          <button class="btn btn-ghost btn-sm" type="button" data-monitor-replay><svg class="icon"><use href="#i-refresh"/></svg>Replay</button>
+        </div>
+        <div class="monitor-plot">
+          <svg class="monitor-chart" role="img" aria-label="Illustrated burn-in run from 0 to 168 hours. A band of healthy parts stays flat near 15 µA. One edge part drifts about 50%. A latent defect stays flat until 24 hours, then climbs to about three times its start. An obvious failure rises from the start."></svg>
+          <div class="monitor-chips"></div>
+        </div>
+        <figcaption>Illustration of one burn-in run. Dashed lines are the drift model's 168 h forecasts, made from the 0 h and 24 h readings.</figcaption>
+      </figure>
+    </section>
+
+    <section class="wrap home-section" aria-labelledby="stepsTitle">
+      <div class="section-head">
+        <p class="mono-eyebrow">How screening works</p>
+        <h2 class="h2" id="stepsTitle">From CSV to verdict in one upload.</h2>
+      </div>
+      <ol class="step-cards">
+        <li class="step-card">
+          <span class="step-card-top"><span class="step-card-n">01</span><span class="step-card-icon"><svg class="icon"><use href="#i-upload"/></svg></span></span>
+          <h3>Upload the burn-in CSV</h3>
+          <p>One row per component with its 0, 24, 96 and 168 hour currents. The columns are checked in your browser before anything is sent.</p>
+        </li>
+        <li class="step-card">
+          <span class="step-card-top"><span class="step-card-n">02</span><span class="step-card-icon"><svg class="icon"><use href="#i-sigma"/></svg></span></span>
+          <h3>Score against the batch</h3>
+          <p>Five weighted signals compare each part with its batch's mean, median and spread, and with how far it drifted between stages.</p>
+        </li>
+        <li class="step-card">
+          <span class="step-card-top"><span class="step-card-n">03</span><span class="step-card-icon"><svg class="icon"><use href="#i-decision"/></svg></span></span>
+          <h3>Forecast and decide</h3>
+          <p>The drift model forecasts the 168 hour current from the first 24 hours. Every part gets PASS, REVIEW or FAIL with the reasons that fired.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="wrap home-section" aria-labelledby="verdictTitle">
+      <div class="section-head">
+        <p class="mono-eyebrow">Three verdicts</p>
+        <h2 class="h2" id="verdictTitle">Every part leaves with a decision.</h2>
+      </div>
+      <div class="verdict-cards">
+        <article class="verdict-card is-pass">
+          <span class="verdict-icon"><svg class="icon"><use href="#i-pass"/></svg></span>
+          <h3>Pass</h3><p class="verdict-range">Score under 35 · low risk</p>
+          <p>Behaves like the rest of its batch. Cleared for flight.</p>
+        </article>
+        <article class="verdict-card is-review">
+          <span class="verdict-icon"><svg class="icon"><use href="#i-review"/></svg></span>
+          <h3>Review</h3><p class="verdict-range">Score 35 to 70 · medium risk</p>
+          <p>Unusual enough that an engineer signs off before it flies.</p>
+        </article>
+        <article class="verdict-card is-fail">
+          <span class="verdict-icon"><svg class="icon"><use href="#i-fail"/></svg></span>
+          <h3>Fail</h3><p class="verdict-range">Score 70 or more · high risk</p>
+          <p>Too far from its batch to trust in flight. Rejected from the lot.</p>
+        </article>
+      </div>
+      <div class="model-strip" id="modelStrip"></div>
+    </section>
+
+    <section class="wrap home-section home-last" aria-labelledby="ctaTitle">
+      <div class="cta-band">
+        <div class="cta-copy">
+          <p class="mono-eyebrow">Ready when you are</p>
+          <h2 class="h2" id="ctaTitle">Have a <span class="nowrap">burn-in</span> run to check?</h2>
+          <p class="lede">Drop the CSV on the Burn-in CSV page, or try the 200-component sample batch first.</p>
+        </div>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-xl" href="#/upload"><svg class="icon"><use href="#i-upload"/></svg>Upload burn-in CSV</a>
+          <button class="btn btn-outline btn-xl" type="button" data-action="sample">Screen the sample batch<svg class="icon"><use href="#i-arrow-right"/></svg></button>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ============ Burn-in CSV (upload) ============ -->
+  <section class="view" data-view="upload" aria-labelledby="uploadTitle" hidden>
+    <div class="wrap page upload">
+      <header class="page-head">
+        <div>
+          <p class="mono-eyebrow">Burn-in CSV</p>
+          <h1 class="h1" id="uploadTitle">Screen a burn-in batch</h1>
+          <p class="lede">Drop the CSV from a burn-in run. The columns are checked here first, then the server scores every component and you land on the overview.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" id="sampleBtn" type="button" data-action="sample"><svg class="icon"><use href="#i-pulse"/></svg>Screen the sample batch</button>
+        </div>
+      </header>
+
+      <div class="callout callout-fail" id="offlineCallout" role="alert" hidden>
+        <svg class="icon"><use href="#i-terminal"/></svg>
+        <div>
+          <p class="callout-title">The screening API isn't answering</p>
+          <p>Start the backend from the project folder, then this page reconnects by itself:</p>
+          <pre class="code"><code>source .venv/bin/activate
+uvicorn app.main:app --reload</code></pre>
+        </div>
+      </div>
+
+      <div id="currentBatch"></div>
+
+      <div class="intake-grid">
+        <div class="panel intake-panel">
+          <label class="dropzone" id="dropzone" for="fileInput">
+            <input type="file" id="fileInput" accept=".csv,text/csv" class="sr-only">
+            <span class="dz-icon" aria-hidden="true"><svg class="icon"><use href="#i-upload"/></svg></span>
+            <span class="dz-title">Drop a burn-in CSV here</span>
+            <span class="dz-sub">or <span class="dz-link">browse your files</span> · CSV up to 10 MB</span>
+          </label>
+
+          <div class="intake-actions">
+            <p class="small muted">No file yet? The sample batch has 200 labelled components from the team dataset.</p>
+            <a class="link" id="sampleLink" href="sample/burn_in_dataset.csv" download>
+              <svg class="icon"><use href="#i-download"/></svg>Download sample CSV
+            </a>
+          </div>
+
+          <div id="filePreview" class="file-preview" hidden></div>
+        </div>
+
+        <aside class="panel schema-panel" aria-labelledby="schemaTitle">
+          <h2 class="panel-title" id="schemaTitle">What the CSV needs</h2>
+          <p class="small muted">One row per component. Currents are in microamps.</p>
+          <table class="schema">
+            <thead><tr><th scope="col">Column</th><th scope="col">Type</th></tr></thead>
+            <tbody>
+              <tr><td><code>Component_ID</code></td><td>Text, unique</td></tr>
+              <tr><td><code>Temperature</code></td><td>Number, °C</td></tr>
+              <tr><td><code>Voltage</code></td><td>Number, V</td></tr>
+              <tr><td><code>Current_0h</code></td><td>Number, µA</td></tr>
+              <tr><td><code>Current_24h</code></td><td>Number, µA</td></tr>
+              <tr><td><code>Current_96h</code></td><td>Number, µA</td></tr>
+              <tr><td><code>Current_168h</code></td><td>Number, µA</td></tr>
+              <tr class="optional"><td><code>Label</code></td><td>Optional ground truth, never used for scoring</td></tr>
+            </tbody>
+          </table>
+        </aside>
+      </div>
+
+      <ol class="pipeline" id="pipeline" aria-label="Screening pipeline">
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-table"/></svg></span><span class="step-text"><span class="step-name">Validate</span><span class="step-sub">Columns, numbers, duplicates</span></span></li>
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-sigma"/></svg></span><span class="step-text"><span class="step-name">Batch statistics</span><span class="step-sub">Mean, median, spread at 168 h</span></span></li>
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-pulse"/></svg></span><span class="step-text"><span class="step-name">Anomaly signals</span><span class="step-sub">Five weighted signals</span></span></li>
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-trend"/></svg></span><span class="step-text"><span class="step-name">Drift analysis</span><span class="step-sub">0→24, 24→96, 96→168 h</span></span></li>
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-clock"/></svg></span><span class="step-text"><span class="step-name">168 h forecast</span><span class="step-sub">ML drift model, with fallback</span></span></li>
+        <li class="step" data-state="idle"><span class="step-icon"><svg class="icon"><use href="#i-decision"/></svg></span><span class="step-text"><span class="step-name">Decision</span><span class="step-sub">PASS · REVIEW · FAIL + reasons</span></span></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ Overview ============ -->
+  <section class="view" data-view="overview" aria-label="Batch overview" hidden>
+    <div id="overviewRoot"></div>
+  </section>
+
+  <!-- ============ Components ============ -->
+  <section class="view" data-view="components" aria-label="Components" hidden>
+    <div id="componentsRoot"></div>
+  </section>
+
+  <!-- ============ Simulator ============ -->
+  <section class="view" data-view="simulator" aria-label="What-if simulator" hidden>
+    <div id="simulatorRoot"></div>
+  </section>
+
+  <!-- ============ Method ============ -->
+  <section class="view" data-view="method" aria-labelledby="methodTitle" hidden>
+    <div class="wrap page method">
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">Method</p>
+          <h1 class="h1" id="methodTitle">How a component earns its verdict</h1>
+          <p class="lede">Each component is judged against the batch it was burned in with, not against a fixed limit. The same rules run in the API and in every view here.</p>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="panel span-12 method-flow" aria-labelledby="mFlow">
+          <h2 class="panel-title" id="mFlow">Pipeline</h2>
+          <ol class="flow">
+            <li><span class="flow-n">01</span><span class="flow-t">CSV upload</span><span class="flow-d">One row per component, currents in µA.</span></li>
+            <li><span class="flow-n">02</span><span class="flow-t">Dataset validation</span><span class="flow-d">Required columns, numeric values, no gaps, unique IDs.</span></li>
+            <li><span class="flow-n">03</span><span class="flow-t">Batch statistics</span><span class="flow-d">Mean, median and standard deviation of the 168 h current.</span></li>
+            <li><span class="flow-n">04</span><span class="flow-t">Anomaly signals</span><span class="flow-d">Five signals, each scaled 0 to 1, then weighted.</span></li>
+            <li><span class="flow-n">05</span><span class="flow-t">Drift analysis</span><span class="flow-d">Stage drift 0→24, 24→96, 96→168 h and total drift.</span></li>
+            <li><span class="flow-n">06</span><span class="flow-t">168 h forecast</span><span class="flow-d">Drift model on the 0 h and 24 h readings.</span></li>
+            <li><span class="flow-n">07</span><span class="flow-t">Risk scoring</span><span class="flow-d">Weighted score, strong-evidence floors, forecast escalation.</span></li>
+            <li><span class="flow-n">08</span><span class="flow-t">Explanation</span><span class="flow-d">Plain-language reasons for every flag that fired.</span></li>
+            <li><span class="flow-n">09</span><span class="flow-t">Decision</span><span class="flow-d">PASS, REVIEW or FAIL with a risk level.</span></li>
+          </ol>
+        </section>
+
+        <section class="panel span-7" aria-labelledby="mScore">
+          <h2 class="panel-title" id="mScore">Anomaly score, 0 to 100</h2>
+          <p class="small muted">Each signal saturates at the limit shown, so one extreme reading can't swamp the rest.</p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th scope="col">Signal</th><th scope="col">Measured as</th><th scope="col" class="num">Saturates at</th><th scope="col" class="num">Weight</th></tr></thead>
+              <tbody>
+                <tr><td>Deviation from batch mean</td><td>|168 h − mean| ÷ mean</td><td class="num">100%</td><td class="num">30%</td></tr>
+                <tr><td>Deviation from batch median</td><td>|168 h − median| ÷ median</td><td class="num">150%</td><td class="num">20%</td></tr>
+                <tr><td>Statistical outlier</td><td>|z-score| at 168 h</td><td class="num">3σ</td><td class="num">15%</td></tr>
+                <tr><td>Total burn-in drift</td><td>|168 h − 0 h| ÷ 0 h</td><td class="num">100%</td><td class="num">20%</td></tr>
+                <tr><td>Forecast growth</td><td>|forecast − 24 h| ÷ 24 h</td><td class="num">100%</td><td class="num">15%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3 class="block-title">Strong-evidence floors</h3>
+          <ul class="rule-list">
+            <li>168 h current 100% or more from the batch mean <span class="rule-v">score ≥ 80</span></li>
+            <li>168 h current 200% or more from the batch mean <span class="rule-v">score ≥ 90</span></li>
+            <li>Current at least doubled during burn-in <span class="rule-v">score ≥ 75</span></li>
+            <li>Forecast at least double the 24 h reading <span class="rule-v">score ≥ 75</span></li>
+          </ul>
+        </section>
+
+        <section class="panel span-5" aria-labelledby="mDecision">
+          <h2 class="panel-title" id="mDecision">Decision</h2>
+          <ul class="threshold-list">
+            <li><span class="badge badge-fail"><svg class="icon"><use href="#i-fail"/></svg>Fail</span><span>Score 70 or more · high risk · reject from lot</span></li>
+            <li><span class="badge badge-review"><svg class="icon"><use href="#i-review"/></svg>Review</span><span>Score 35 to 70 · medium risk · engineer sign-off</span></li>
+            <li><span class="badge badge-pass"><svg class="icon"><use href="#i-pass"/></svg>Pass</span><span>Score under 35 · low risk · cleared</span></li>
+          </ul>
+          <h3 class="block-title">Forecast escalation</h3>
+          <ul class="rule-list">
+            <li>Forecast growth of 100% or more after 24 h <span class="rule-v">→ FAIL</span></li>
+            <li>Forecast growth of 50% or more on a PASS <span class="rule-v">→ REVIEW</span></li>
+          </ul>
+        </section>
+
+        <section class="panel span-7" aria-labelledby="mForecast">
+          <h2 class="panel-title" id="mForecast">The 168 h forecast</h2>
+          <p>The drift model reads only the 0 h and 24 h currents. It learns how much a component grows between 24 h and 168 h from how far it drifted in the first 24 h: <code>168 h = 24 h × (a + b × early drift)</code>, fitted with robust Huber regression so the defective parts in a training batch can't drag it around. Working in growth ratios rather than raw microamps lets the model carry over to batches that run at a different current.</p>
+          <p>A screening line could stop burn-in early if the forecast is trustworthy, so the overview always checks it against the measured 168 h value and against the error measured in cross-validation when the model was trained.</p>
+          <p>The forecast falls back to linear extrapolation, <code>0 h + (24 h − 0 h) ÷ 24 × 168</code>, when a component's early drift is outside the range the model was trained on, or when the model's answer isn't plausible. Every component reports where its forecast came from: <code>ML_MODEL</code>, <code>FALLBACK_OUT_OF_RANGE</code>, <code>FALLBACK_UNSAFE_MODEL</code>, <code>FALLBACK_MODEL_ERROR</code> or <code>FALLBACK_NO_MODEL</code>.</p>
+        </section>
+
+        <section class="panel span-5" aria-labelledby="mApi">
+          <h2 class="panel-title" id="mApi">API</h2>
+          <p class="small muted">Base URL <code id="apiBaseLabel">this server</code>. Full schema at <a class="link link-plain" href="docs" target="_blank" rel="noopener">/docs</a>.</p>
+          <ul class="endpoint-list">
+            <li><span class="verb">GET</span><code>/health</code><span>Status and model info</span></li>
+            <li><span class="verb verb-post">POST</span><code>/batch/screen</code><span>Screen every component</span></li>
+            <li><span class="verb verb-post">POST</span><code>/batch/{id}/simulate</code><span>What-if component</span></li>
+            <li><span class="verb verb-post">POST</span><code>/batch/analyze-component</code><span>One component vs batch</span></li>
+            <li><span class="verb verb-post">POST</span><code>/batch/analyze</code><span>Batch statistics only</span></li>
+            <li><span class="verb verb-post">POST</span><code>/analyze</code><span>Quick single check</span></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Mobile tab bar -->
+<nav class="bottom-nav" aria-label="Views">
+  <a href="#/" data-nav="home"><svg class="icon"><use href="#i-home"/></svg><span>Home</span></a>
+  <a href="#/upload" data-nav="upload"><svg class="icon"><use href="#i-upload"/></svg><span>CSV</span></a>
+  <a href="#/overview" data-nav="overview"><svg class="icon"><use href="#i-grid"/></svg><span>Overview</span></a>
+  <a href="#/components" data-nav="components"><svg class="icon"><use href="#i-list"/></svg><span>Components</span></a>
+  <button type="button" id="moreBtn" data-nav="simulator method" data-action="more" aria-expanded="false" aria-controls="moreMenu"><svg class="icon"><use href="#i-more"/></svg><span>More</span></button>
+</nav>
+<div class="more-menu" id="moreMenu" hidden>
+  <a href="#/simulator" data-nav="simulator"><svg class="icon"><use href="#i-sliders"/></svg><span>Simulator</span><small>Test a what-if component</small></a>
+  <a href="#/method" data-nav="method"><svg class="icon"><use href="#i-book"/></svg><span>Method</span><small>How a verdict is reached</small></a>
+</div>
+
+<!-- Component detail -->
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <div id="drawerRoot"></div>
+</aside>
+
+<!-- Shortcuts -->
+<dialog class="dialog" id="shortcutsDialog" aria-labelledby="shortcutsTitle">
+  <div class="dialog-head">
+    <h2 class="panel-title" id="shortcutsTitle">Keyboard shortcuts</h2>
+    <button class="icon-btn" type="button" data-close-dialog aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+  <dl class="shortcuts">
+    <div><dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd></dt><dd>Home, Overview, Components, Simulator, Method</dd></div>
+    <div><dt><kbd>N</kbd></dt><dd>Burn-in CSV: upload a new batch</dd></div>
+    <div><dt><kbd>/</kbd></dt><dd>Search components</dd></div>
+    <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Previous or next component in the detail panel</dd></div>
+    <div><dt><kbd>Esc</kbd></dt><dd>Close the detail panel</dd></div>
+    <div><dt><kbd>T</kbd></dt><dd>Switch light and dark theme</dd></div>
+    <div><dt><kbd>?</kbd></dt><dd>Show this list</dd></div>
+  </dl>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+</body>
+</html>

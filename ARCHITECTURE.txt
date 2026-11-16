@@ -22,13 +22,19 @@ PASS / REVIEW / FAIL
 ↓
 JSON API
 ↓
-Frontend Dashboard
+Frontend Dashboard (Sentinel, served at /)
 
-MAIN ENDPOINT: POST /batch/analyze-component
+MAIN ENDPOINTS:
+POST /batch/screen → every component in one call (dashboard)
+POST /batch/analyze-component → one component vs its batch
+POST /batch/{batch_id}/simulate → what-if component vs a stored batch
 
 MODULES:
-main.py → FastAPI endpoints
+main.py → FastAPI endpoints, in-memory batch store, static dashboard
 schemas.py → Request/response validation
-batch_analysis.py → Dataset and batch analysis
-analysis_engine.py → Anomaly and drift calculations
-prediction_engine.py → 168h prediction
+batch_analysis.py → Dataset validation, scoring, batch screening, forecast and label checks
+analysis_engine.py → Anomaly and drift calculations for /analyze
+prediction_engine.py → 168h prediction (model cached, batch predictions, out-of-range guard, model info)
+drift_model.py → Drift growth model: 168h = 24h × (a + b × early drift)
+train_drift_model.py → Trains the model, cross-validates it, writes models/drift_model.pkl + .json
+frontend/ → Dashboard (HTML, CSS, vanilla JS, SVG charts)

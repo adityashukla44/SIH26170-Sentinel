@@ -11,6 +11,22 @@ class ComponentData(BaseModel):
     current_168h: float | None = Field(default=None, ge=0)
 
 
+class SimulationInput(BaseModel):
+    """A hypothetical component, screened against an uploaded batch.
+
+    If component_id matches a component in the batch, that component's
+    readings are replaced ("what if C042 had read this instead?").
+    """
+
+    component_id: str = Field(default="SIM-001", min_length=1, max_length=64)
+    temperature: float
+    voltage: float
+    current_0h: float = Field(..., ge=0)
+    current_24h: float = Field(..., ge=0)
+    current_96h: float = Field(..., ge=0)
+    current_168h: float = Field(..., ge=0)
+
+
 class AnalysisResponse(BaseModel):
     component_id: str
     anomaly_score: float
@@ -21,6 +37,31 @@ class AnalysisResponse(BaseModel):
     risk_level: str
     decision: str
     reasons: list[str]
+
+
+class ScoreSignal(BaseModel):
+    key: str
+    label: str
+    weight: float
+    input: float
+    input_unit: str
+    signal: float
+    points: float
+    max_points: float
+
+
+class ScoreOverride(BaseModel):
+    floor: float
+    description: str
+
+
+class ScoreBreakdown(BaseModel):
+    signals: list[ScoreSignal]
+    base_score: float
+    overrides: list[ScoreOverride]
+    escalation: str | None = None
+    review_threshold: float
+    fail_threshold: float
 
 
 class BatchComponentAnalysisResponse(BaseModel):
@@ -45,3 +86,12 @@ class BatchComponentAnalysisResponse(BaseModel):
     risk_level: str
     decision: str
     reasons: list[str]
+    # Added for the dashboard. Optional, so existing clients are unaffected.
+    temperature: float | None = None
+    voltage: float | None = None
+    current_0h: float | None = None
+    current_24h: float | None = None
+    current_96h: float | None = None
+    current_168h: float | None = None
+    label: str | None = None
+    score_breakdown: ScoreBreakdown | None = None
