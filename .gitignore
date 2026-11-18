@@ -1,5 +1,15 @@
+# Python
 .venv/
+venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+
+# Local tooling
+.claude/
+.vscode/
+.idea/
+
+# OS and secrets
 .DS_Store
 .env

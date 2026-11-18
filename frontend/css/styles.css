@@ -511,6 +511,15 @@ kbd {
 .home-section { padding-block: 64px; }
 .home-last { padding-bottom: 104px; }
 .section-head { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; max-width: 880px; }
+/* Section headings on Home get the same soft shade as the hero, so the 3D field stays behind the words. */
+.home-section .section-head { position: relative; isolation: isolate; }
+.home-section .section-head::before {
+  content: ""; position: absolute; inset: -48px -96px; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(5, 4, 8, .8), rgba(5, 4, 8, .45) 60%, transparent);
+}
+:root[data-theme="light"] .home-section .section-head::before {
+  background: radial-gradient(closest-side, rgba(245, 243, 251, .88), rgba(245, 243, 251, .5) 60%, transparent);
+}
 @media (max-width: 639px) { .home-section { padding-block: 44px; } .section-head { margin-bottom: 24px; } }
 
 /* burn-in monitor */
